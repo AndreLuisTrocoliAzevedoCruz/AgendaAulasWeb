@@ -1,13 +1,20 @@
 // ==============================================================
 // 		EVENTOS
 
-// RESET
 reset = function() {
-	// Aqui você cria uma requisição AJAX POST a ControllerServlet
-	// Você repassa, com a chave 'op' o parâmetro 'RESET'
-	// Se a requisição for bem sucedida, você executa:
-	// atualizaSessao() e window.location.href = "/prova1".
-	// Se não for bem sucedida, decida o que fazer.
+    let req = new XMLHttpRequest();
+    req.open("POST", "ControllerServlet", true);
+    req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    req.onreadystatechange = () => {
+        if (req.readyState == 4 && req.status == 200) {
+            atualizaSessao();
+            window.location.href = "/prova1";
+        } else {
+            // Em caso de falha, você pode decidir o que fazer aqui
+            console.error("Falha ao resetar");
+        }
+    }
+    req.send("op=RESET");
 }
 
 // NOVA AULA
@@ -25,63 +32,104 @@ editarAula = function(id) {
 	window.location.href = "edit?id=" + id;
 }
 
-// ENVIA CONTEÚDO DA NOVA AULA
 enviarNovaAula = function() {
-	// obtém os valores a partir do formulário
-	let data = document.getElementById('data-id').value;
-	let horario = document.getElementById('hora-id').value;
-	let duracao = document.getElementById('dur-id').value;
-	let codDisciplina = document.getElementById('disc-id').value;
-	let assunto = document.getElementById('ass-id').value;
-	// verificando a validação
-	if (!validaNovaAula(data, horario, duracao, codDisciplina, assunto)) {
+    // obtém os valores a partir do formulário
+    let data = document.getElementById('data-id').value;
+    let horario = document.getElementById('hora-id').value;
+    let duracao = document.getElementById('dur-id').value;
+    let codDisciplina = document.getElementById('disc-id').value;
+    let assunto = document.getElementById('ass-id').value;
+    
+    // Verifica a validação dos dados
+    if (!validaNovaAula(data, horario, duracao, codDisciplina, assunto)) {
         document.getElementById('msg-id').style.display = 'block';
         return;
     }
-    // Aqui, você faz uma requisição AJAX POST a ControllerServlet e
-    // envia a chave 'op' valendo 'CREATE'. Envie, do mesmo modo, os parâmetros
-    // data, horario, duracao, codDisciplina e assunto.
-    // Se a requisição for bem sucedida, execute atualizaSessao() e
-    // window.location.href = "/prova1"
-    // Se não for bem sucedida, decida o que fazer
+    
+    // Cria uma nova requisição AJAX POST
+    let req = new XMLHttpRequest();
+    req.open("POST", "ControllerServlet", true);
+    req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    req.onreadystatechange = () => {
+        if (req.readyState == 4) {
+            if (req.status == 200) {
+                // Requisição bem-sucedida, atualiza a sessão e redireciona para "/prova1"
+                atualizaSessao();
+                window.location.href = "/prova1";
+            } else {
+                // Requisição falhou, faça algo aqui (por exemplo, mostrar uma mensagem de erro)
+                console.error("Falha ao enviar nova aula");
+            }
+        }
+    }
+    
+    // Envia os parâmetros da nova aula para a ControllerServlet
+    let params = `op=CREATE&data=${data}&horario=${horario}&duracao=${duracao}&codDisciplina=${codDisciplina}&assunto=${assunto}`;
+    req.send(params);
 }
 
-// ENVIA CONTEÚDO EM EDIÇÃO
+
 enviarEdit = function() {
-	// obtém os valores a partir do formulário
-	let id = document.getElementById('id').innerHTML;
-	let data = document.getElementById('data-id').value;
-	let horario = document.getElementById('hora-id').value;
-	let duracao = document.getElementById('dur-id').value;
-	let codDisciplina = document.getElementById('disc-id').value;
-	let assunto = document.getElementById('ass-id').value;
-	// Aqui, você faz uma requisição AJAX POST a ControllerServlet e
-    // envia a chave 'op' valendo 'UPDATE'. Envie, do mesmo modo, os parâmetros
-    // id, data, horario, duracao, codDisciplina e assunto.
-    // Se a requisição for bem sucedida, execute atualizaSessao() e
-    // window.location.href = "/prova1"
-    // Se não for bem sucedida, decida o que fazer
+    let id = document.getElementById('id').innerHTML;
+    let data = document.getElementById('data-id').value;
+    let horario = document.getElementById('hora-id').value;
+    let duracao = document.getElementById('dur-id').value;
+    let codDisciplina = document.getElementById('disc-id').value;
+    let assunto = document.getElementById('ass-id').value;
+
+    // Reformatar a data para o formato "dd/mm/yyyy"
+    //let partesData = data.split('-');
+    //let dataFormatada = partesData[2] + '/' + partesData[1] + '/' + partesData[0];
+    
+    if (!(/^\d+$/.test(duracao)) || parseInt(duracao) <= 0) {
+        alert("A duração da aula deve ser um número inteiro positivo.");
+        return; // Impede o envio do formulário se a validação falhar
+    }
+
+    let req = new XMLHttpRequest();
+    req.open("POST", "ControllerServlet", true);
+    req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    req.onreadystatechange = () => {
+        if (req.readyState == 4) {
+            if (req.status == 200) {
+                atualizaSessao();
+                window.location.href = "/prova1";
+            } else {
+                console.error("Falha ao enviar edição da aula");
+            }
+        }
+    }
+    
+    // Use a data formatada ao enviar os parâmetros da aula editada para a ControllerServlet
+    //let params = "op=UPDATE&id=${id}&data=${dataFormatada}&horario=${horario}&duracao=${duracao}&codDisciplina=${codDisciplina}&assunto=${assunto}";
+    //let params = "op=UPDATE&id" + id + "&data"
+    req.send("op=UPDATE&id=" + id + "&data=" + data + "&horario=" + horario + "&duracao="
+		+ duracao + "&codDisciplina=" + codDisciplina + "&assunto=" + assunto);
+    //req.send(params);
+    
 }
 
 // DELETA UMA AULA
 deleta = function(id) {
-	// Aqui, você faz uma requisição AJAX POST a ControllerServlet e
-    // envia a chave 'op' valendo 'DELETE'. Envie, do mesmo modo, o parâmetro id
-    // Se a requisição for bem sucedida, execute atualizaSessao() e
-    // window.location.href = "/prova1"
-    // Se não for bem sucedida, decida o que fazer
-	let req = new XMLHttpRequest();
-	req.open("POST", "ControllerServlet", true);
-	req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-	req.onreadystatechange = () => {
-		if (req.readyState == 4 && req.status == 200) {
-			atualizaSessao();
-			window.location.href = "/prova1";
-		} else {
-			// O QUE FAZER SE DEU ERRADO
-		}
-	}
-	req.send("op=DELETE&id=" + id);
+    // Cria uma nova requisição AJAX POST
+    let req = new XMLHttpRequest();
+    req.open("POST", "ControllerServlet", true);
+    req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    req.onreadystatechange = () => {
+        if (req.readyState == 4) {
+            if (req.status == 200) {
+                // Requisição bem-sucedida, atualiza a sessão e redireciona para "/prova1"
+                atualizaSessao();
+                window.location.href = "/prova1";
+            } else {
+                // Requisição falhou, faça algo aqui (por exemplo, mostrar uma mensagem de erro)
+                console.error("Falha ao excluir aula");
+            }
+        }
+    }
+
+    // Envia o parâmetro 'id' para a ControllerServlet para identificar qual aula deve ser deletada
+    req.send(`op=DELETE&id=${id}`);
 }
 
 
@@ -107,9 +155,14 @@ const atualizaSessao = function() {
 // 			VALIDAÇÕES
 
 validaNovaAula = function(data, horario, duracao, codDisciplina, assunto) {
-    // Examine os valores dos parâmetros deste método e decida se estão
-    // ou não validados. Este 'return true' provavelmente será alterado, não?
-    return true;
+    // Verifica se algum campo está vazio
+    if (data.trim() === '' || horario.trim() === '' || duracao.trim() === '' || codDisciplina.trim() === '' || assunto.trim() === ''|| parseInt(duracao) <= 0) {
+        // Se algum campo estiver vazio, retorna falso
+        return false;
+    } else {
+        // Se todos os campos estiverem preenchidos, retorna verdadeiro
+        return true;
+    }
 }
 
 
